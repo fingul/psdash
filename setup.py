@@ -36,7 +36,7 @@ setup(
         'argparse'
     ],
     test_suite='tests',
-    tests_require=['unittest2'],
+    tests_require=['unittest'],
     entry_points={
         'console_scripts': [
             'psdash = psdash.run:main'

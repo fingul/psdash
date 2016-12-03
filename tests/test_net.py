@@ -1,9 +1,9 @@
-import unittest2
+import unittest
 import socket
 from psdash.net import NetIOCounters
 
 
-class TestNet(unittest2.TestCase):
+class TestNet(unittest.TestCase):
     def setUp(self):
         self.io_counter = NetIOCounters()
 

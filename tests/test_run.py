@@ -3,12 +3,12 @@ from psdash.run import PsDashRunner
 from psdash.node import LocalNode
 import gevent
 import socket
-import unittest2
+import unittest
 import tempfile
 import time
 
 
-class TestRunner(unittest2.TestCase):
+class TestRunner(unittest.TestCase):
     def test_args_log(self):
         _, filename = tempfile.mkstemp()
         r = PsDashRunner(args=['-l', filename])

@@ -68,7 +68,7 @@ class ReverseFileSearcher(object):
             if bufpos > -1:
                 filepos = self._fp.tell() + bufpos
                 self._fp.seek(filepos)
-                return filepos
+                yield filepos
 
             # for it to work when the needle is split between chunks.
             lastbuf = buf[:len(self._needle)]
@@ -83,7 +83,7 @@ class ReverseFileSearcher(object):
         :rtype : tuple
         """
         self.reset()
-        return tuple(pos for pos in self)
+        return [pos for pos in self]
 
 
 class LogReader(object):
@@ -200,7 +200,7 @@ class Logs(object):
         return i
 
     def clear(self):
-        for r in self.readers.itervalues():
+        for r in self.readers.values():
             r.close()
         self.readers = {}
 

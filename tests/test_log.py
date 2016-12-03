@@ -1,13 +1,15 @@
 # coding=utf-8
 import os
 import tempfile
-import unittest2
+import unittest
 import time
-from cStringIO import StringIO
+# from cStringIO import StringIO
+from io import StringIO
+
 from psdash.log import Logs, LogReader, LogError, ReverseFileSearcher
 
 
-class TestLogs(unittest2.TestCase):
+class TestLogs(unittest.TestCase):
     NEEDLE = 'foobar\n'
     POSITIONS = [10000, 8000, 6000, 4000, 2000, 500]
 
@@ -28,12 +30,12 @@ class TestLogs(unittest2.TestCase):
 
     def test_searching(self):
         log = self.logs.get(self.filename)
-        positions = [log.search(self.NEEDLE)[0] for _ in xrange(len(self.POSITIONS))]
+        positions = [log.search(self.NEEDLE)[0] for _ in range(len(self.POSITIONS))]
         self.assertEqual(self.POSITIONS, positions)
 
     def test_searching_other_buffer_size(self):
         log = LogReader(self.filename, LogReader.BUFFER_SIZE / 2)
-        positions = [log.search(self.NEEDLE)[0] for _ in xrange(len(self.POSITIONS))]
+        positions = [log.search(self.NEEDLE)[0] for _ in range(len(self.POSITIONS))]
         self.assertEqual(self.POSITIONS, positions)
 
     def test_searching_no_result(self):
@@ -55,14 +57,16 @@ class TestLogs(unittest2.TestCase):
         self.assertIn('<LogReader', repr(log))
 
     def test_add_pattern(self):
+        os.removedirs('/tmp/0/')
+        os.makedirs('/tmp/0/')
         ts = time.time()
         suffix = '%d.log' % ts
         tempfile.mkstemp(suffix=suffix)
         tempfile.mkstemp(suffix=suffix)
-        num_added = self.logs.add_patterns(['/tmp/*%s' % suffix])
+        num_added = self.logs.add_patterns(['/tmp/0/*%s' % suffix])
         self.assertEqual(num_added, 2)
 
-    @unittest2.skipIf(os.environ.get('USER') == 'root', "We'll have access to this if we're root")
+    @unittest.skipIf(os.environ.get('USER') == 'root', "We'll have access to this if we're root")
     def test_add_pattern_no_access(self):
         num_added = self.logs.add_patterns(['/proc/vmallocinfo'])
         self.assertEqual(num_added, 0)
@@ -72,7 +76,7 @@ class TestLogs(unittest2.TestCase):
         self.assertEqual(num_added, 0)
 
 
-class TestFileSearcher(unittest2.TestCase):
+class TestFileSearcher(unittest.TestCase):
         def _create_temp_file(self, buf):
             _, filename = tempfile.mkstemp("log")
             with open(filename, "w") as f:
@@ -99,7 +103,7 @@ class TestFileSearcher(unittest2.TestCase):
 
         def test_find_all(self):
             positions = self.searcher.find_all()
-            self.assertEqual(positions, tuple(reversed(self.positions)))
+            self.assertEqual(positions, reversed(self.positions))
 
         def test_find_one(self):
             pos = self.searcher.find()
@@ -163,7 +167,7 @@ class TestFileSearcher(unittest2.TestCase):
             buf = StringIO()
             buf.write("TESTING SOME SEARCHING!\n" * 10000)
             buf.seek(-(ReverseFileSearcher.DEFAULT_CHUNK_SIZE + 100), os.SEEK_END)
-            for _ in xrange(20):
+            for _ in range(20):
                 buf.write(self.needle)
 
             filename = self._create_temp_file(buf.getvalue())
@@ -175,7 +179,7 @@ class TestFileSearcher(unittest2.TestCase):
         def test_single_chunk(self):
             buf = StringIO()
             buf.write("TESTING SOME SEARCHING!\n" * 100)
-            for _ in xrange(20):
+            for _ in range(20):
                 buf.write(self.needle)
 
             filename = self._create_temp_file(buf.getvalue())
@@ -211,4 +215,4 @@ class TestFileSearcher(unittest2.TestCase):
 
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()

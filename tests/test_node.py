@@ -4,13 +4,13 @@ import platform
 from psdash.log import LogReader
 import socket
 import tempfile
-import unittest2
+import unittest
 import time
 import psutil
 from psdash.node import LocalNode
 
 
-class TestNode(unittest2.TestCase):
+class TestNode(unittest.TestCase):
     def setUp(self):
         self.node = LocalNode()
         self.service = self.node.get_service()
@@ -102,7 +102,7 @@ class TestNode(unittest2.TestCase):
         for a in asserts:
             self.assertIn(a, cores[0])
 
-    @unittest2.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
+    @unittest.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
     def test_get_disks(self):
         disks = self.service.get_disks()
         self.assertIsInstance(disks, list)
@@ -111,7 +111,7 @@ class TestNode(unittest2.TestCase):
         for a in asserts:
             self.assertIn(a, disks[0])
 
-    @unittest2.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
+    @unittest.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
     def test_get_disks_counters(self):
         counters = self.service.get_disks_counters()
         self.assertIsInstance(counters, dict)
@@ -148,7 +148,7 @@ class TestNode(unittest2.TestCase):
         for a in asserts:
             self.assertIn(a, proc)
 
-    @unittest2.skipIf(os.environ.get('USER') != 'root', 'os.setuid requires privileged user')
+    @unittest.skipIf(os.environ.get('USER') != 'root', 'os.setuid requires privileged user')
     def test_get_process_list_anonymous_process(self):
         os.setuid(12345)
         process_list = self.service.get_process_list()
@@ -170,7 +170,7 @@ class TestNode(unittest2.TestCase):
         for a in asserts:
             self.assertIn(a, proc)
 
-    @unittest2.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
+    @unittest.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
     def test_get_process_limits(self):
         limits = self.service.get_process_limits(os.getpid())
         self.assertIsInstance(limits, dict)

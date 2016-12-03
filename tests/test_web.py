@@ -1,6 +1,6 @@
 import gevent
 import json
-import unittest2
+import unittest
 import base64
 import os
 import tempfile
@@ -13,7 +13,7 @@ except ImportError:
     # support for python 3
     import http.client as httplib
 
-class TestBasicAuth(unittest2.TestCase):
+class TestBasicAuth(unittest.TestCase):
     default_username = 'tester'
     default_password = 'secret'
 
@@ -52,7 +52,7 @@ class TestBasicAuth(unittest2.TestCase):
         self.assertEqual(resp.status_code, httplib.UNAUTHORIZED)
 
 
-class TestAllowedRemoteAddresses(unittest2.TestCase):
+class TestAllowedRemoteAddresses(unittest.TestCase):
     def test_correct_remote_address(self):
         r = PsDashRunner({'PSDASH_ALLOWED_REMOTE_ADDRESSES': '127.0.0.1'})
         resp = r.app.test_client().get('/', environ_overrides={'REMOTE_ADDR': '127.0.0.1'})
@@ -88,7 +88,7 @@ class TestAllowedRemoteAddresses(unittest2.TestCase):
         self.assertEqual(resp.status_code, httplib.UNAUTHORIZED)
 
 
-class TestEnvironmentWhitelist(unittest2.TestCase):
+class TestEnvironmentWhitelist(unittest.TestCase):
     def test_show_only_whitelisted(self):
         r = PsDashRunner({'PSDASH_ENVIRON_WHITELIST': ['USER']})
         resp = r.app.test_client().get('/process/%d/environment' % os.getpid())
@@ -96,7 +96,7 @@ class TestEnvironmentWhitelist(unittest2.TestCase):
         self.assertTrue('*hidden by whitelist*' in resp.data)
 
 
-class TestUrlPrefix(unittest2.TestCase):
+class TestUrlPrefix(unittest.TestCase):
     def setUp(self):
         self.default_prefix = '/subfolder/'
 
@@ -126,7 +126,7 @@ class TestUrlPrefix(unittest2.TestCase):
         self.assertEqual(resp.status_code, httplib.OK)
 
 
-class TestHttps(unittest2.TestCase):
+class TestHttps(unittest.TestCase):
     def _run(self, https=False):
         options = {'PSDASH_PORT': 5051}
         if https:
@@ -153,7 +153,7 @@ class TestHttps(unittest2.TestCase):
         self.assertEqual(resp.getcode(), httplib.OK)
 
 
-class TestEndpoints(unittest2.TestCase):
+class TestEndpoints(unittest.TestCase):
     def setUp(self):
         self.r = PsDashRunner()
         self.app = self.r.app
@@ -165,7 +165,7 @@ class TestEndpoints(unittest2.TestCase):
         resp = self.client.get('/')
         self.assertEqual(resp.status_code, httplib.OK)
 
-    @unittest2.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
+    @unittest.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
     def test_disks(self):
         resp = self.client.get('/disks')
         self.assertEqual(resp.status_code, httplib.OK)
@@ -182,7 +182,7 @@ class TestEndpoints(unittest2.TestCase):
         resp = self.client.get('/process/%d' % self.pid)
         self.assertEqual(resp.status_code, httplib.OK)
 
-    @unittest2.skipIf(os.environ.get('USER') == 'root', 'It would fail as root as we would have access to pid 1')
+    @unittest.skipIf(os.environ.get('USER') == 'root', 'It would fail as root as we would have access to pid 1')
     def test_process_no_access(self):
         resp = self.client.get('/process/1')  # pid 1 == init
         self.assertEqual(resp.status_code, httplib.UNAUTHORIZED)
@@ -215,7 +215,7 @@ class TestEndpoints(unittest2.TestCase):
         resp = self.client.get('/process/%d/memory' % self.pid)
         self.assertEqual(resp.status_code, httplib.OK)
 
-    @unittest2.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
+    @unittest.skipIf('TRAVIS' in os.environ, 'Functionality not supported on Travis CI')
     def test_process_limits(self):
         resp = self.client.get('/process/%d/limits' % self.pid)
         self.assertEqual(resp.status_code, httplib.OK)
@@ -244,7 +244,7 @@ class TestEndpoints(unittest2.TestCase):
         self.assertEqual(resp.status_code, httplib.BAD_REQUEST)
 
 
-class TestLogs(unittest2.TestCase):
+class TestLogs(unittest.TestCase):
     def _create_log_file(self):
         fd, filename = tempfile.mkstemp()
         fp = os.fdopen(fd, 'w')
@@ -328,4 +328,4 @@ class TestLogs(unittest2.TestCase):
 
 
 if __name__ == '__main__':
-    unittest2.main()
+    unittest.main()

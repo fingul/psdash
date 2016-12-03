@@ -1,35 +1,43 @@
-
 # define Python 3 compatible eventloop API
+from urllib.error import HTTPError
+from urllib.request import HTTPBasicAuthHandler, build_opener, install_opener, urlopen
+from wsgiref.simple_server import WSGIServer
+
+import zerorpc
+
 
 class eventloop(object):
     call_later = None
 
-try:
-    import gevent
-    from gevent.monkey import patch_all
-    patch_all()
 
-    from gevent.pywsgi import WSGIServer
-    eventloop.call_later = gevent.spawn_later
-except ImportError:
-    gevent = False
-    import asyncio
-    eventloop = asyncio.get_event_loop()
+# try:
+#     import gevent
+#     from gevent.monkey import patch_all
+#
+#     patch_all()
+#
+#     from gevent.pywsgi import WSGIServer
+#
+#     eventloop.call_later = gevent.spawn_later
+# except ImportError:
+#     gevent = False
+# import gevent
+import asyncio
 
+eventloop = asyncio.get_event_loop()
 
-import locale
 import argparse
+import locale
 import logging
 import socket
 import urllib
-#import urllib2
 from logging import getLogger
+
 from flask import Flask
-#import zerorpc
+
 from psdash import __version__
 from psdash.node import LocalNode, RemoteNode
 from psdash.web import fromtimestamp
-
 
 logger = getLogger('psdash.run')
 
@@ -65,7 +73,7 @@ class PsDashRunner(object):
             '-l', '--log',
             action='append',
             dest='logs',
-            default=None,
+            default='/etc/log/**/*.log',
             metavar='path',
             help='log files to make available for psdash. Patterns (e.g. /var/log/**/*.log) are supported. '
                  'This option can be used multiple times.'
@@ -188,7 +196,7 @@ class PsDashRunner(object):
         if not addrs:
             return
 
-        if isinstance(addrs, (str, unicode)):
+        if isinstance(addrs, (str,)):
             app.config[key] = [a.strip() for a in addrs.split(',')]
 
     def _setup_logging(self):
@@ -200,7 +208,7 @@ class PsDashRunner(object):
             format=format
         )
         logging.getLogger('werkzeug').setLevel(logging.WARNING if not self.app.debug else logging.DEBUG)
-        
+
     def _setup_workers(self):
         net_io_interval = self.app.config.get('PSDASH_NET_IO_COUNTER_INTERVAL', self.DEFAULT_NET_IO_COUNTER_INTERVAL)
         eventloop.call_later(net_io_interval, self._net_io_counters_worker, net_io_interval)
@@ -222,23 +230,23 @@ class PsDashRunner(object):
         if 'PSDASH_LOGS' in self.app.config:
             self.get_local_node().logs.add_patterns(self.app.config['PSDASH_LOGS'])
 
-    def _logs_worker(self, sleep_interval):
-        while True:
-            logger.debug("Reloading logs...")
-            self.get_local_node().logs.add_patterns(self.app.config['PSDASH_LOGS'])
-            gevent.sleep(sleep_interval)
-
-    def _register_agent_worker(self, sleep_interval):
-        while True:
-            logger.debug("Registering agent...")
-            self._register_agent()
-            gevent.sleep(sleep_interval)
-
-    def _net_io_counters_worker(self, sleep_interval):
-        while True:
-            logger.debug("Updating net io counters...")
-            self.get_local_node().net_io_counters.update()
-            gevent.sleep(sleep_interval)
+    # def _logs_worker(self, sleep_interval):
+    #     while True:
+    #         logger.debug("Reloading logs...")
+    #         self.get_local_node().logs.add_patterns(self.app.config['PSDASH_LOGS'])
+    #         gevent.sleep(sleep_interval)
+    #
+    # def _register_agent_worker(self, sleep_interval):
+    #     while True:
+    #         logger.debug("Registering agent...")
+    #         self._register_agent()
+    #         gevent.sleep(sleep_interval)
+    #
+    # def _net_io_counters_worker(self, sleep_interval):
+    #     while True:
+    #         logger.debug("Updating net io counters...")
+    #         self.get_local_node().net_io_counters.update()
+    #         gevent.sleep(sleep_interval)
 
     def _register_agent(self):
         register_name = self.app.config.get('PSDASH_REGISTER_AS')
@@ -252,19 +260,19 @@ class PsDashRunner(object):
         register_url = '%s/register?%s' % (self.app.config['PSDASH_REGISTER_TO'], urllib.urlencode(url_args))
 
         if 'PSDASH_AUTH_USERNAME' in self.app.config and 'PSDASH_AUTH_PASSWORD' in self.app.config:
-            auth_handler = urllib2.HTTPBasicAuthHandler()
+            auth_handler = HTTPBasicAuthHandler()
             auth_handler.add_password(
                 realm='psDash login required',
                 uri=register_url,
                 user=self.app.config['PSDASH_AUTH_USERNAME'],
                 passwd=self.app.config['PSDASH_AUTH_PASSWORD']
             )
-            opener = urllib2.build_opener(auth_handler)
-            urllib2.install_opener(opener)
+            opener = build_opener(auth_handler)
+            install_opener(opener)
 
         try:
-            urllib2.urlopen(register_url)
-        except urllib2.HTTPError as e:
+            urlopen(register_url)
+        except HTTPError as e:
             logger.error('Failed to register agent to "%s": %s', register_url, e)
 
     def _run_rpc(self):
@@ -292,18 +300,18 @@ class PsDashRunner(object):
 
         host = self.app.config.get('PSDASH_BIND_HOST', self.DEFAULT_BIND_HOST)
         port = self.app.config.get('PSDASH_PORT', self.DEFAULT_PORT)
-        if gevent:
-            listen_to = (host, port)
-            self.server = WSGIServer(
-                listen_to,
-                application=self.app,
-                log=log,
-                **ssl_args
-            )
-        else:
-            from wsgiref.simple_server import make_server
-            self.server = make_server(host, port, self.app)
-            print("Serving with wsgiref on http://%s:%s ..." % (host, port))
+        # if gevent:
+        #     listen_to = (host, port)
+        #     self.server = WSGIServer(
+        #         listen_to,
+        #         self.app,
+        #         # log=log,
+        #         # **ssl_args
+        #     )
+        # else:
+        from wsgiref.simple_server import make_server
+        self.server = make_server(host, port, self.app)
+        print("Serving with wsgiref on http://%s:%s ..." % (host, port))
         self.server.serve_forever()
 
     def run(self):
@@ -325,7 +333,7 @@ class PsDashRunner(object):
 def main():
     r = PsDashRunner.create_from_cli_args()
     r.run()
-    
+
 
 if __name__ == '__main__':
     main()
