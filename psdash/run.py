@@ -318,7 +318,7 @@ class PsDashRunner(object):
         logger.info('Starting psdash v%s' % __version__)
 
         self._setup_locale()
-        self._setup_workers()
+        # self._setup_workers()
 
         logger.info('Listening on %s:%s',
                     self.app.config.get('PSDASH_BIND_HOST', self.DEFAULT_BIND_HOST),
